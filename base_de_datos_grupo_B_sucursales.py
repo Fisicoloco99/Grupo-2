@@ -7,11 +7,7 @@ cursor.execute("PRAGMA foreign_keys = ON;")
 cursor.execute(""" CREATE TABLE IF NOT EXISTS sucursales(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 nombre TEXT NOT NULL,
-direccion TEXT NOT NULL,
-empleados_id INTEGER,
-FOREIGN KEY (empleados_id) REFERENCES empleados (empleados_id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+direccion TEXT NOT NULL
 )
 """)
 conexion.commit()
@@ -21,7 +17,7 @@ class Sucursal:
         self.nombre   = nombre
         self.direccion = direccion
     def mostrar_datos(self):
-        return f"La sucursal es {self.nombre} ubicada en {self.direccion}. Contiene {self.asistencias_mensuales} empleados."
+        return f"La sucursal es {self.nombre} ubicada en {self.direccion}."
 
 def mostrar_lista():
     cursor.execute("SELECT * FROM sucursales")
@@ -32,7 +28,7 @@ def mostrar_lista():
     texto = "--- sucursales ---\n"
     for sucursal in sucursales:
         # sucursal = (id, nombre, sucursal)
-        texto += f"ID: {sucursal[0]} "+f" Nombre: {sucursal[1]} " +f" Direccion: {sucursal[2]} " + f" Numero de empleados: {sucursal[4]} "
+        texto += f"ID: {sucursal[0]} "+f" Nombre: {sucursal[1]} " +f" Direccion: {sucursal[2]} "
         print(texto)
 
 def agregar_nueva_sucursal(nombre,direccion):
@@ -46,51 +42,38 @@ def agregar_nueva_sucursal(nombre,direccion):
     conexion.commit()
     print(f"Sucursal agregado: {sucursal.mostrar_datos()}")
 
-def modificar_sucursal(nombre, direccion):
-    if nombre == "" or direccion == "":
-        print("Complete todos los campos")
+def modificar_sucursal(id_sucursal):
+    cursor.execute("SELECT * FROM sucursales WHERE id = ?", (id_sucursal,))
+    sucursal = cursor.fetchone()
+    if not sucursal:
+        print("No se encontró ninguna sucursal con ese ID.")
         return
-    cursor.execute("SELECT * FROM sucursales WHERE nombre = ? AND direccion = ?", (nombre, direccion))
-    sucursal = cursor.fetchall()
     while True:
         print("Seleccione los datos a modificar (seleccione el dato usando un numero)")
-        print("1. Nombre\n2. Direccion\n3. Numero de empleados\n0. Salir")
+        print("1. Nombre\n2. Direccion\n0. Salir")
         select = input()
         if select == "0":
             break
         elif select == "1":
             nuevo_nombre = input("Nuevo dato: ")
-            cursor.execute("UPDATE sucursales SET nombre = ? WHERE nombre = ? AND direccion = ?", (nuevo_nombre, nombre, direccion))
+            cursor.execute("UPDATE sucursales SET nombre = ? WHERE id = ?", (nuevo_nombre, id_sucursal))
             conexion.commit()
             nombre = nuevo_nombre
             print("Sucursal modificada correctamente")
         elif select == "2":
             nueva_direccion = int(input("Nuevo dato: "))
-            cursor.execute("UPDATE sucursales SET direccion = ? WHERE nombre = ? AND direccion = ?", (nueva_direccion, nombre, direccion))
+            cursor.execute("UPDATE sucursales SET direccion = ? WHERE id = ?", (nueva_direccion, id_sucursal))
             conexion.commit()
-            print("Sucursal modificada correctamente")
-        elif select == "3":
-            nuevo_id = int(input("Nuevo dato: "))
-            cursor.execute("UPDATE id SET dni = ? WHERE nombre = ? AND direccion = ?", (nuevo_id, nombre, id))
-            conexion.commit()
-            id = id
             print("Sucursal modificada correctamente")
         else:
             print("Error, intente devuelta")
 
-def eliminar_sucursal(nombre,direccion):
-    if nombre == "" or direccion == "":
-        print("Campo vacio. Escriba un nombre y direccion de sucursal")
-        return
-    nombre = nombre
-    direccion = direccion
-    cursor.execute("SELECT * FROM sucursales WHERE nombre = ?, direccion = ?",(nombre,direccion))
-    sucursal = cursor.fetchmany()
-
-    if not sucursal:
+def eliminar_sucursal(id_sucursal):
+    cursor.execute("SELECT * FROM sucursales WHERE id = ?", (id_sucursal,))
+    if not cursor.fetchone():
         print("No hay registro para esa sucursal")
         return
-    cursor.execute("DELETE FROM sucursales WHERE nombre = ?, direccion = ?",(nombre,direccion))
+    cursor.execute("DELETE FROM sucursales WHERE id = ?", (id_sucursal,))
     conexion.commit()
     print("Sucursal eliminada correctamente")
 
@@ -114,14 +97,18 @@ while True:
         direccion=int(input("Direccion\n"))
         agregar_nueva_sucursal(nombre,direccion)
     elif op=="3":
-        print("Ingrese los datos de su sucursal")
-        nombre=input("Nombre de la sucursal\n")
-        direccion=input("Direccion\n")
-        modificar_sucursal(nombre,direccion)
+        mostrar_lista()
+        id_modificado = input("Ingrese el ID de la sucursal a modificar: ")
+        if id_modificado.isdigit():
+            modificar_sucursal(int(id_modificado))
+        else:
+            print("ID invalido")
     elif op=="4":
-        print("Ingrese los datos de su direccion")
-        nombre=input("Nombre de la sucursal\n")
-        direccion=input("Direccion\n")
-        eliminar_sucursal(nombre,direccion)
+        mostrar_lista()
+        id_eliminado = input("Ingrese el ID de la sucursal a eliminar: ")
+        if id_eliminado.isdigit():
+            eliminar_sucursal(int(id_eliminado))
+        else:
+            print("ID invalido")
     else:
         print("opcion invalida")
