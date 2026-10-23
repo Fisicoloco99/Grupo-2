@@ -64,8 +64,15 @@ def abrir_ventana_sucursales():  # No le paso variables, solo la dejo asi
         mensaje.config(text=f"Sucursal '{nueva_sucursal.nombre}' agregada.", fg="green")
         nombre_sucursal.delete(0, tk.END) # limpia
         direccion_sucursal.delete(0, tk.END) #limpia 
-
-    # 5.Boton para la ventana sucursales , falta todo el CRUD
+    def eliminar_todas_las_sucursales():
+        cursor.execute("DROP TABLE IF EXISTS sucursales")
+        conexion.commit()
+        mensaje.config(ventana_sucursales,text="Sucursales correctamente eliminadas")
+    def crear_nueva_base_de_datos_sucursales():
+        cursor.execute(""" CREATE TABLE IF NOT EXISTS sucursales(id INTEGER PRIMARY KEY AUTOINCREMENT,nombre TEXT NOT NULL,direccion TEXT NOT NULL)""")
+        conexion.commit()
+        mensaje.config(ventana_sucursales,text="Nueva base de datos de sucursales creada")
+    # 5.Boton para la ventana sucursales
     boton_datos = Button(ventana_sucursales,text="Mostrar sucursal",command=Sucursal.mostrar_datos)
     boton_datos.grid()
     boton_nueva_sucursal= Button(ventana_sucursales,text="Modificar sucursal")
@@ -74,7 +81,12 @@ def abrir_ventana_sucursales():  # No le paso variables, solo la dejo asi
     boton_eliminar_sucursal.grid()
     boton_cerrar = Button(ventana_sucursales, text='Cerrar', command=ventana_sucursales.destroy)
     boton_cerrar.grid()
-
+    btn_base_de_datos_nueva = Button(ventana_sucursales,text="Crear base de datos nueva",command= crear_nueva_base_de_datos_sucursales)
+    btn_base_de_datos_nueva.grid()
+    btn_vaciar = Button(ventana_sucursales,text="Vaciar base de datos", command= eliminar_todas_las_sucursales)
+    btn_vaciar.grid()
+    btn_añadir = Button(ventana_sucursales,text ="Añadir sucursales",command=agregar_nueva_sucursal)
+    btn_añadir.grid()
 def abrir_ventana_empleados():
     #1.Crear una ventana para empleados
     ventana_empleados = tk.Toplevel(ventana)
@@ -114,4 +126,3 @@ btn_cerrar.grid()
 
 # Iniciar el bucle principal
 ventana.mainloop()
-
