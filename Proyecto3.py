@@ -1,128 +1,194 @@
 import sqlite3
 import tkinter as tk
-from tkinter import Label, Button,Entry, Canvas, Frame,Toplevel
-# Aca se crea la conexion
-conexion=sqlite3.connect("Tabla_sucursales.db")
-cursor=conexion.cursor()
+from tkinter import Label, Button, Entry, Frame, Toplevel
+
+# ===========================================================
+# CONEXION A BASE DE DATOS
+# ===========================================================
+conexion = sqlite3.connect("Tabla_sucursales.db")
+cursor = conexion.cursor()
 cursor.execute("PRAGMA foreign_keys = ON;")
+
 cursor.execute(""" CREATE TABLE IF NOT EXISTS sucursales(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 nombre TEXT NOT NULL,
 direccion TEXT NOT NULL)""")
-cursor.execute("""CREATE TABLE IF NOT EXISTS empleados(id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, año_inicio INTEGER,asistencia INTEGER , dni INTEGER,sucursal_id INTEGER, FOREIGN KEY (sucursal_id) REFERENCES sucursales(id))""")
+
+cursor.execute("""CREATE TABLE IF NOT EXISTS empleados(
+id INTEGER PRIMARY KEY AUTOINCREMENT, 
+nombre TEXT NOT NULL, 
+año_inicio INTEGER,
+asistencia INTEGER, 
+dni INTEGER,
+sucursal_id INTEGER, 
+FOREIGN KEY (sucursal_id) REFERENCES sucursales(id))""")
 conexion.commit()
+
 class Sucursal:
-    def __init__(self,id_sucursal,nombre,direccion):
+    def __init__(self, id_sucursal, nombre, direccion):
         self.id_sucursal = id_sucursal
         self.nombre = nombre
         self.direccion = direccion
+
     def mostrar_datos(self):
-            return f"La sucursal es {self.nombre} ubicada en {self.direccion} y su ID es: {self.id_sucursal}."
+        return f"ID: {self.id_sucursal} | {self.nombre} - {self.direccion}."
+        
     def ver_empleados(self):
-        cursor.execute("SELECT nombres FROM empleados WHERE sucursal_id = ?",(self.id_sucursal))
+        cursor.execute("SELECT nombre FROM empleados WHERE sucursal_id = ?", (self.id_sucursal,))
         empleados = cursor.fetchall()
         if not empleados:   
             return 'No hay empleados'
         else:
-            texto = f"Empleados en {self.nombre}:\n"
+            texto = f"\nEmpleados en {self.nombre}:\n"
             for empleado in empleados:
-                texto +=f"- {empleado[0]}\n"
+                texto += f"- {empleado[0]}\n"
             return texto
-# ======================================= FUNCIONES PARA CADA VENTANA ==========================================================================
-# 1.Voy a crear una funcion para que funcione. Esta abre la ventana secundaria con los menus.
-def abrir_ventana_sucursales():  # No le paso variables, solo la dejo asi
-    # 2.Crear ventana secundaria (hija de la ventana principal)
-    ventana_sucursales = Toplevel(ventana)  # aca estaria haciendo que haya una ventana nueva o hija
-    ventana_sucursales.title('Gestor de sucursales')  # titulo para la ventana
-    ventana_sucursales.geometry('500x500')  # geometria de la ventana, un poco mas grande para que entre todo
-    ventana_sucursales.config() # aca seria para "decorar" la vemtana
-    # 3.Mensaje para el usuario con la instruccion para que escriba
-    Label(ventana_sucursales, text='Ingrese el ID de la sucursal para modificar los datos que desea:').grid()
-    # 4.Entry para los datos de las sucursales, nombre, id, direccion
-    Label(ventana_sucursales,text="Escriba el ID de la sucursal").grid()
+# ===========================================================
+# VENTANA SUCURSALES
+# ===========================================================
+def abrir_ventana_sucursales():
+    ventana_sucursales = Toplevel(ventana)
+    ventana_sucursales.title('Gestor de sucursales')
+    ventana_sucursales.geometry('500x550')
+    ventana_sucursales.config(bg="#0a0a0a") # Fondo terminal
+
+    mensaje = Label(ventana_sucursales, text="", fg="#00FF00", bg="#0a0a0a", justify="left")
+    mensaje.grid(row=0, column=0, columnspan=2, pady=10)
+
+    Label(ventana_sucursales, text="Escriba el ID de la sucursal", fg="#FCAF17", bg="#0a0a0a").grid(row=1, column=0, pady=5)
     id_sucursal = Entry(ventana_sucursales)
-    id_sucursal.grid()
-    Label(ventana_sucursales,text="Escriba el nombre de la sucursal").grid()
+    id_sucursal.grid(row=1, column=1, pady=5)
+
+    Label(ventana_sucursales, text="Escriba el nombre de la sucursal", fg="#FCAF17", bg="#0a0a0a").grid(row=2, column=0, pady=5)
     nombre_sucursal = Entry(ventana_sucursales)
-    nombre_sucursal.grid()
-    Label(ventana_sucursales,text="Escriba la direccion de la sucursal").grid()
+    nombre_sucursal.grid(row=2, column=1, pady=5)
+
+    Label(ventana_sucursales, text="Escriba la direccion", fg="#FCAF17", bg="#0a0a0a").grid(row=3, column=0, pady=5)
     direccion_sucursal = Entry(ventana_sucursales)
-    direccion_sucursal.grid()
-    # Aca la parte fea y medio dificil , las funciones internas
+    direccion_sucursal.grid(row=3, column=1, pady=5)
 
     def agregar_nueva_sucursal():
         nombre = nombre_sucursal.get()
         direccion = direccion_sucursal.get()
-        # Valido que no esten vacios
         if nombre == "" or direccion == "":
-            mensaje.config("Complete todos los campos")
+            mensaje.config(text="Complete todos los campos", fg="red") 
             return
-        #aca deberia poner eñ nuevo objeto
-        nueva_sucursal = Sucursal(None,nombre,direccion)
-        cursor.execute("INSERT INTO sucursales(nombre,direccion) VALUES (?,?)",(nueva_sucursal.nombre,nueva_sucursal.direccion))
+            
+        nueva_sucursal = Sucursal(None, nombre, direccion)
+        cursor.execute("INSERT INTO sucursales(nombre,direccion) VALUES (?,?)", (nueva_sucursal.nombre, nueva_sucursal.direccion))
         conexion.commit()
-        mensaje.config(text=f"Sucursal '{nueva_sucursal.nombre}' agregada.", fg="green")
-        nombre_sucursal.delete(0, tk.END) # limpia
-        direccion_sucursal.delete(0, tk.END) #limpia 
+        mensaje.config(text=f"Sucursal '{nueva_sucursal.nombre}' agregada.", fg="#00FF00")
+        nombre_sucursal.delete(0, tk.END)
+        direccion_sucursal.delete(0, tk.END)
+
+    def mostrar_sucursal_y_empleados():
+        id_buscar = id_sucursal.get()
+        if id_buscar == "":
+            mensaje.config(text="Escriba un ID para buscar", fg="red")
+            return
+        cursor.execute("SELECT id, nombre, direccion FROM sucursales WHERE id = ?", (id_buscar,))
+        resultado = cursor.fetchone()
+        
+        if resultado:
+            sucursal_encontrada = Sucursal(resultado[0], resultado[1], resultado[2])
+            texto_final = sucursal_encontrada.mostrar_datos() + sucursal_encontrada.ver_empleados()
+            mensaje.config(text=texto_final, fg="#00FF00")
+        else:
+            mensaje.config(text="No existe sucursal con ese ID", fg="red")
+
     def eliminar_todas_las_sucursales():
         cursor.execute("DROP TABLE IF EXISTS sucursales")
         conexion.commit()
-        mensaje.config(ventana_sucursales,text="Sucursales correctamente eliminadas")
+        # CORREGIDO: mensaje.config no lleva la ventana adentro
+        mensaje.config(text="Tabla de sucursales eliminada.", fg="red")
+
     def crear_nueva_base_de_datos_sucursales():
         cursor.execute(""" CREATE TABLE IF NOT EXISTS sucursales(id INTEGER PRIMARY KEY AUTOINCREMENT,nombre TEXT NOT NULL,direccion TEXT NOT NULL)""")
         conexion.commit()
-        mensaje.config(ventana_sucursales,text="Nueva base de datos de sucursales creada")
-    # 5.Boton para la ventana sucursales
-    boton_datos = Button(ventana_sucursales,text="Mostrar sucursal",command=Sucursal.mostrar_datos)
-    boton_datos.grid()
-    boton_nueva_sucursal= Button(ventana_sucursales,text="Modificar sucursal")
-    boton_nueva_sucursal.grid()
-    boton_eliminar_sucursal = Button(ventana_sucursales,text="Eliminar sucursal")
-    boton_eliminar_sucursal.grid()
-    boton_cerrar = Button(ventana_sucursales, text='Cerrar', command=ventana_sucursales.destroy)
-    boton_cerrar.grid()
-    btn_base_de_datos_nueva = Button(ventana_sucursales,text="Crear base de datos nueva",command= crear_nueva_base_de_datos_sucursales)
-    btn_base_de_datos_nueva.grid()
-    btn_vaciar = Button(ventana_sucursales,text="Vaciar base de datos", command= eliminar_todas_las_sucursales)
-    btn_vaciar.grid()
-    btn_añadir = Button(ventana_sucursales,text ="Añadir sucursales",command=agregar_nueva_sucursal)
-    btn_añadir.grid()
-def abrir_ventana_empleados():
-    #1.Crear una ventana para empleados
-    ventana_empleados = tk.Toplevel(ventana)
-    ventana_empleados.title('Gestor de empleados')  # titulo para la ventana
-    ventana_empleados.geometry('500x500')  # geometria de la ventana, un poco mas grande para que entre todo
-    ventana_empleados.config()
-    #2.Creo las entradas para el gestor de empleados
-    Label(ventana_empleados,text="Escriba el ID del empleado").grid()
-    empleado_id = tk.Entry(ventana_empleados)
-    empleado_id.grid()
-    Label(ventana_empleados,text="Escriba el nombre del empleado").grid()
-    empleado_nombre = tk.Entry(ventana_empleados)
-    empleado_nombre.grid()   
-    Label(ventana_empleados,text="Escriba el DNI del empleado").grid()
-    empleado_DNI = tk.Entry(ventana_empleados)
-    empleado_DNI.grid()    
-    Label(ventana_empleados,text="Escriba los dias trabajados del empleado").grid()
-    empleado_dias_trabajados= tk.Entry(ventana_empleados)
-    empleado_dias_trabajados.grid()   
+        mensaje.config(text="Tabla de sucursales creada de nuevo.", fg="#00FF00")
+
+    # Botones de Sucursales
+    Button(ventana_sucursales, text="Mostrar sucursal", command=mostrar_sucursal_y_empleados, bg="#FCAF17").grid(row=4, column=0, columnspan=2, pady=5)
+    Button(ventana_sucursales, text="Añadir sucursal", command=agregar_nueva_sucursal, bg="#E3000F", fg="white").grid(row=5, column=0, columnspan=2, pady=5)
+    Button(ventana_sucursales, text="Crear base de datos nueva", command=crear_nueva_base_de_datos_sucursales).grid(row=6, column=0, columnspan=2, pady=5)
+    Button(ventana_sucursales, text="Vaciar base de datos", command=eliminar_todas_las_sucursales).grid(row=7, column=0, columnspan=2, pady=5)
+    Button(ventana_sucursales, text='Cerrar', command=ventana_sucursales.destroy).grid(row=8, column=0, columnspan=2, pady=10)
+
 # ===========================================================
-# VENTANA PRINCIPAL
-# ============================================================
+# VENTANA EMPLEADOS
+# ===========================================================
+def abrir_ventana_empleados():
+    ventana_empleados = tk.Toplevel(ventana)
+    ventana_empleados.title('Gestor de empleados')
+    ventana_empleados.geometry('500x500')
+    ventana_empleados.config(bg="#0a0a0a")
+
+    Label(ventana_empleados, text="Escriba el ID del empleado", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
+    empleado_id = tk.Entry(ventana_empleados)
+    empleado_id.grid(pady=5)
+    
+    Label(ventana_empleados, text="Escriba el nombre del empleado", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
+    empleado_nombre = tk.Entry(ventana_empleados)
+    empleado_nombre.grid(pady=5)   
+    
+    Label(ventana_empleados, text="Escriba el DNI del empleado", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
+    empleado_DNI = tk.Entry(ventana_empleados)
+    empleado_DNI.grid(pady=5)    
+    
+    Label(ventana_empleados, text="Escriba los dias trabajados", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
+    empleado_dias_trabajados = tk.Entry(ventana_empleados)
+    empleado_dias_trabajados.grid(pady=5)   
+
+# =================================================================
+# VENTANA PRINCIPAL (DISEÑO ROCKSTAR TERMINAL COMO EL DE IGNACION)
+# =================================================================
+# --- PALETA DE COLORES ---
+ROJO_ROCKSTAR = "#E3000F"
+AMARILLO_ROCKSTAR = "#FCAF17"
+NEGRO_TERMINAL = "#0a0a0a"
+VERDE_TERMINAL = "#00FF00"
+
 ventana = tk.Tk()
 ventana.title("Gestor de sucursales y empleados ROCK STAR")
-ventana.geometry("500x400")
-mensaje = Label(ventana, text="Gestor de sucursales y empleados", font=("Arial", 16))
-mensaje.grid()
+ventana.geometry("600x450")
+ventana.config(bg=NEGRO_TERMINAL) # Fondo general negro
 
-#Boton para Ventana principal
-btn_metros = Button(ventana, text="SUCURSALES", command=abrir_ventana_sucursales)
-btn_metros.grid()
-#Boton para Empleados 
-btn_tiempo = Button(ventana,text='EMPLEADOS', command=abrir_ventana_empleados)
-btn_tiempo.grid()
-btn_cerrar = Button(ventana,text="CERRAR",command=ventana.destroy)
-btn_cerrar.grid()
+# Configuramos las columnas para que el centro se estire
+ventana.grid_columnconfigure(1, weight=1)
 
-# Iniciar el bucle principal
+# --- 1. BANNER ROJO ARRIBA (Fila 0) ---
+# Usamos columnspan=3 para que ocupe todo el ancho
+banner_rojo = Frame(ventana, bg=ROJO_ROCKSTAR, height=80)
+banner_rojo.grid(row=0, column=0, columnspan=3, sticky="ew")
+Label(banner_rojo, text="ROCKSTAR MANAGER", bg=ROJO_ROCKSTAR, fg=AMARILLO_ROCKSTAR, font=("Courier", 20, "bold")).pack(pady=20)
+
+# --- 2. COSTADOS AMARILLOS (Fila 1) ---
+# Margen Izquierdo
+frame_izq = Frame(ventana, bg=AMARILLO_ROCKSTAR, width=40)
+frame_izq.grid(row=1, column=0, sticky="ns")
+# Margen Derecho
+frame_der = Frame(ventana, bg=AMARILLO_ROCKSTAR, width=40)
+frame_der.grid(row=1, column=2, sticky="ns")
+
+# --- 3. CENTRO (Fila 1) - Estilo Consola ---
+frame_centro = Frame(ventana, bg=NEGRO_TERMINAL)
+frame_centro.grid(row=1, column=1, sticky="nsew")
+Label(frame_centro, text=" Seleccione una opcion abajo.", 
+      bg=NEGRO_TERMINAL, fg=VERDE_TERMINAL, font=("Courier", 12), justify="left").pack(pady=40)
+
+# --- 4. BOTONES ABAJO (Fila 2) ---
+frame_botones = Frame(ventana, bg=NEGRO_TERMINAL)
+# Ocupa las 3 columnas para que quede centrado abajo
+frame_botones.grid(row=2, column=0, columnspan=3, pady=20)
+
+# Usamos grid para poner los botones uno al lado del otro
+btn_sucursales = Button(frame_botones, text="SUCURSALES", command=abrir_ventana_sucursales, bg=ROJO_ROCKSTAR, fg="white", font=("Arial", 10, "bold"), width=15)
+btn_sucursales.grid(row=0, column=0, padx=10)
+
+btn_empleados = Button(frame_botones, text="EMPLEADOS", command=abrir_ventana_empleados, bg=AMARILLO_ROCKSTAR, fg="black", font=("Arial", 10, "bold"), width=15)
+btn_empleados.grid(row=0, column=1, padx=10)
+
+btn_cerrar = Button(frame_botones, text="CERRAR", command=ventana.destroy, bg="gray", fg="white", font=("Arial", 10, "bold"), width=10)
+btn_cerrar.grid(row=0, column=2, padx=10)
+
 ventana.mainloop()
