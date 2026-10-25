@@ -13,7 +13,6 @@ cursor.execute(""" CREATE TABLE IF NOT EXISTS sucursales(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 nombre TEXT NOT NULL,
 direccion TEXT NOT NULL)""")
-
 cursor.execute("""CREATE TABLE IF NOT EXISTS empleados(
 id INTEGER PRIMARY KEY AUTOINCREMENT, 
 nombre TEXT NOT NULL, 
@@ -23,7 +22,6 @@ dni INTEGER,
 sucursal_id INTEGER, 
 FOREIGN KEY (sucursal_id) REFERENCES sucursales(id))""")
 conexion.commit()
-
 class Sucursal:
     def __init__(self, id_sucursal, nombre, direccion):
         self.id_sucursal = id_sucursal
@@ -43,6 +41,15 @@ class Sucursal:
             for empleado in empleados:
                 texto += f"- {empleado[0]}\n"
             return texto
+class Empleado:
+    def __init__(self,nombre,año_inicio,asistencia,dni,sucursal_id):
+        self.nombre= nombre
+        self.año_inicio = año_inicio
+        self.asistencia = asistencia
+        self.dni = dni
+        self.sucursal_id = sucursal_id #aca lo hago composicion , es un intento a ver si me sale
+    def mostrar_informacion(self):
+        print(f"El empleado es {self.nombre},cuyo DNI es: {self.dni}, emepezo a trabajar en la sucursal {self.sucursal_id} en el {self.año_inicio} año, lleva {self.asistencia} dias trabajando")
 # ===========================================================
 # VENTANA SUCURSALES
 # ===========================================================
@@ -72,15 +79,13 @@ def abrir_ventana_sucursales():
         direccion = direccion_sucursal.get()
         if nombre == "" or direccion == "":
             mensaje.config(text="Complete todos los campos", fg="red") 
-            return
-            
+            return          
         nueva_sucursal = Sucursal(None, nombre, direccion)
         cursor.execute("INSERT INTO sucursales(nombre,direccion) VALUES (?,?)", (nueva_sucursal.nombre, nueva_sucursal.direccion))
         conexion.commit()
         mensaje.config(text=f"Sucursal '{nueva_sucursal.nombre}' agregada.", fg="#00FF00")
         nombre_sucursal.delete(0, tk.END)
         direccion_sucursal.delete(0, tk.END)
-
     def mostrar_sucursal_y_empleados():
         id_buscar = id_sucursal.get()
         if id_buscar == "":
@@ -95,13 +100,11 @@ def abrir_ventana_sucursales():
             mensaje.config(text=texto_final, fg="#00FF00")
         else:
             mensaje.config(text="No existe sucursal con ese ID", fg="red")
-
     def eliminar_todas_las_sucursales():
         cursor.execute("DROP TABLE IF EXISTS sucursales")
         conexion.commit()
         # CORREGIDO: mensaje.config no lleva la ventana adentro
         mensaje.config(text="Tabla de sucursales eliminada.", fg="red")
-
     def crear_nueva_base_de_datos_sucursales():
         cursor.execute(""" CREATE TABLE IF NOT EXISTS sucursales(id INTEGER PRIMARY KEY AUTOINCREMENT,nombre TEXT NOT NULL,direccion TEXT NOT NULL)""")
         conexion.commit()
@@ -109,10 +112,10 @@ def abrir_ventana_sucursales():
 
     # Botones de Sucursales
     Button(ventana_sucursales, text="Mostrar sucursal", command=mostrar_sucursal_y_empleados, bg="#FCAF17").grid(row=4, column=0, columnspan=2, pady=5)
-    Button(ventana_sucursales, text="Añadir sucursal", command=agregar_nueva_sucursal, bg="#E3000F", fg="white").grid(row=5, column=0, columnspan=2, pady=5)
-    Button(ventana_sucursales, text="Crear base de datos nueva", command=crear_nueva_base_de_datos_sucursales).grid(row=6, column=0, columnspan=2, pady=5)
-    Button(ventana_sucursales, text="Vaciar base de datos", command=eliminar_todas_las_sucursales).grid(row=7, column=0, columnspan=2, pady=5)
-    Button(ventana_sucursales, text='Cerrar', command=ventana_sucursales.destroy).grid(row=8, column=0, columnspan=2, pady=10)
+    Button(ventana_sucursales, text="Añadir sucursal", command=agregar_nueva_sucursal, bg="#E3000F").grid(row=4, column=3, columnspan=2, pady=5)
+    Button(ventana_sucursales, text="Crear base de datos nueva", command=crear_nueva_base_de_datos_sucursales,fg="#ffffff",bg="#000000").grid(row=5, column=0, columnspan=2, pady=5)
+    Button(ventana_sucursales, text="Vaciar base de datos", command=eliminar_todas_las_sucursales,fg="#ffffff",bg="#000000").grid(row=5, column=4, columnspan=2, pady=5)
+    Button(ventana_sucursales, text='Cerrar', command=ventana_sucursales.destroy,fg="#ffffff",bg="#000000").grid(row=8, column=1, columnspan=2, pady=10)
 
 # ===========================================================
 # VENTANA EMPLEADOS
@@ -122,26 +125,79 @@ def abrir_ventana_empleados():
     ventana_empleados.title('Gestor de empleados')
     ventana_empleados.geometry('500x500')
     ventana_empleados.config(bg="#0a0a0a")
-
-    Label(ventana_empleados, text="Escriba el ID del empleado", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
+    #ACA ESCRIBO LAS ENTRADAS ASI ME FUNCIONA LAS FUNCIONES Y OBTIENEN LOS DATOS
+    Label(ventana_empleados,text="Escriba el ID del empleado", fg="#FCAF17", bg="#0a0a0a").grid(row = 0,column=0,pady=5)
     empleado_id = tk.Entry(ventana_empleados)
-    empleado_id.grid(pady=5)
-    
-    Label(ventana_empleados, text="Escriba el nombre del empleado", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
+    empleado_id.grid(column=0,pady=5)
+    Label(ventana_empleados, text="Escriba el nombre del empleado", fg="#FCAF17", bg="#0a0a0a").grid(row= 0,column=1,pady=5)
     empleado_nombre = tk.Entry(ventana_empleados)
-    empleado_nombre.grid(pady=5)   
-    
-    Label(ventana_empleados, text="Escriba el DNI del empleado", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
+    empleado_nombre.grid(row=1,column=1,pady=5)   
+    Label(ventana_empleados, text="Escriba el DNI del empleado", fg="#FCAF17", bg="#0a0a0a").grid(row=0,column=3,pady=5)
     empleado_DNI = tk.Entry(ventana_empleados)
-    empleado_DNI.grid(pady=5)    
-    
-    Label(ventana_empleados, text="Escriba los dias trabajados", fg="#FCAF17", bg="#0a0a0a").grid(pady=5)
-    empleado_dias_trabajados = tk.Entry(ventana_empleados)
-    empleado_dias_trabajados.grid(pady=5)   
-
-# =================================================================
-# VENTANA PRINCIPAL (DISEÑO ROCKSTAR TERMINAL COMO EL DE IGNACION)
-# =================================================================
+    empleado_DNI.grid(row=1,column=3,pady=5)    
+    Label(ventana_empleados, text="Escriba los dias trabajados", fg="#FCAF17", bg="#0a0a0a").grid(row=0,column=4,pady=5)
+    empleado_dias = tk.Entry(ventana_empleados)
+    empleado_dias.grid(row=1,column=4,pady=5)   
+    Label(ventana_empleados, text="Escriba las asistencias", fg="#FCAF17", bg="#0a0a0a").grid(row=0,column=5,pady=5)
+    empleado_asistencia = tk.Entry(ventana_empleados)
+    empleado_asistencia.grid(row=1,column=5,pady=5) 
+    Label(ventana_empleados, text="Escriba el ID de la sucursal", fg="#FCAF17", bg="#0a0a0a").grid(row=0, column=6, pady=5)
+    empleado_sucursal_id = tk.Entry(ventana_empleados)
+    empleado_sucursal_id.grid(row=1, column=6, pady=5)
+    def agregar_nuevo_empleado():
+        nombre = empleado_nombre.get()
+        dni = int(empleado_DNI.get())
+        años = int(empleado_dias.get())
+        asistencia = empleado_asistencia.get()
+        sucursal_id = int(empleado_sucursal_id.get()) 
+        nuevo_empleado = Empleado(nombre, años, asistencia, dni, sucursal_id)
+        cursor.execute("INSERT INTO empleados(nombre, año_inicio, asistencia, dni, sucursal_id) VALUES (?,?,?,?,?)",(nuevo_empleado.nombre, nuevo_empleado.año_inicio, nuevo_empleado.asistencia, nuevo_empleado.dni, nuevo_empleado.sucursal_id))
+        conexion.commit()
+        mensaje.config(text=f"Nuevo empleado {nuevo_empleado.nombre} agregado.", fg="#00FF00")
+        # Limpiamos
+        empleado_nombre.delete(0, tk.END)
+        empleado_DNI.delete(0, tk.END)
+        empleado_dias.delete(0,tk.END)
+        empleado_asistencia.delete(0,tk.END)
+        empleado_sucursal_id.delete(0,tk.END)
+    def mostrar_empleados():
+        id_buscar = Entry(ventana_empleados)
+        if id_buscar != empleado_id:
+            mensaje.config(text="Escriba un ID para buscar", fg="red")
+            return
+        cursor.execute("SELECT id, nombre,año_inicio,asistencia,dni,sucursal_id FROM empleados WHERE id = ?", (id_buscar,))
+        resultado = cursor.fetchone()
+        
+        if resultado:
+            empleado_encontrado = Empleado(resultado[0], resultado[1], resultado[2],resultado[3],resultado[4],resultado[5])
+            texto_final = empleado_encontrado.mostrar_informacion() 
+            mensaje.config(text=texto_final, fg="#00FF00")
+        else:
+            mensaje.config(text="No existe el empleado solicitado con ese ID", fg="red")
+    def eliminar_todos_los_archivos_empleados():
+        cursor.execute("DROP TABLE IF EXISTS empleados")
+        conexion.commit()
+        mensaje.config(text="Tabla de empleados eliminada.", fg="red")
+    def crear_nueva_base_de_datos_empleados():
+        cursor.execute("""CREATE TABLE IF NOT EXISTS empleados(
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        nombre TEXT NOT NULL, 
+        año_inicio INTEGER,
+        asistencia INTEGER, 
+        dni INTEGER,
+        sucursal_id INTEGER, 
+        FOREIGN KEY (sucursal_id) REFERENCES sucursales(id))""")
+        conexion.commit()
+        mensaje.config(text="Tabla de empleados creada de nuevo.", fg="#00FF00")
+    # Botones de Sucursales
+    Button(ventana_empleados, text="Mostrar empleados", command=mostrar_empleados, bg="#FCAF17").grid(row=4, column=0, columnspan=1, pady=5)
+    Button(ventana_empleados, text="Añadir empleados", command=agregar_nuevo_empleado, bg="#E3000F", fg="white").grid(row=4,column=1, columnspan=1, pady=5)
+    Button(ventana_empleados, text="Crear base de datos nueva de empleados", command=crear_nueva_base_de_datos_empleados,fg="#ffffff",bg="#000000").grid(row=4, column=2,columnspan=2, pady=5)
+    Button(ventana_empleados, text="Vaciar base de datos", command=eliminar_todos_los_archivos_empleados,fg="#ffffff",bg="#000000").grid(row=4, column=4, columnspan=2, pady=5)
+    Button(ventana_empleados, text='Cerrar', command=ventana_empleados.destroy,fg="#ffffff",bg="#000000").grid(row=5, column=2, columnspan=2, pady=10)
+# ===========================================================
+# VENTANA PRINCIPAL (DISEÑO ROCKSTAR TERMINAL)
+# ===========================================================
 # --- PALETA DE COLORES ---
 ROJO_ROCKSTAR = "#E3000F"
 AMARILLO_ROCKSTAR = "#FCAF17"
@@ -152,6 +208,8 @@ ventana = tk.Tk()
 ventana.title("Gestor de sucursales y empleados ROCK STAR")
 ventana.geometry("600x450")
 ventana.config(bg=NEGRO_TERMINAL) # Fondo general negro
+mensaje = Label(ventana,text="")
+
 
 # Configuramos las columnas para que el centro se estire
 ventana.grid_columnconfigure(1, weight=1)
