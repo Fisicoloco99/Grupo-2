@@ -169,8 +169,8 @@ def abrir_ventana_empleados():
         empleado_asistencia.delete(0,tk.END)
         empleado_sucursal_id.delete(0,tk.END)
     def mostrar_empleados():
-        id_buscar = Entry(ventana_empleados)
-        if id_buscar != empleado_id:
+        id_buscar = empleado_id.get() 
+        if id_buscar == "":
             mensaje.config(text="Escriba un ID para buscar", fg="red")
             return
         cursor.execute("SELECT id, nombre,año_inicio,asistencia,dni,sucursal_id FROM empleados WHERE id = ?", (id_buscar,))
