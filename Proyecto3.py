@@ -49,7 +49,7 @@ class Empleado:
         self.dni = dni
         self.sucursal_id = sucursal_id #aca lo hago composicion , es un intento a ver si me sale
     def mostrar_informacion(self):
-        print(f"El empleado es {self.nombre},cuyo DNI es: {self.dni}, emepezo a trabajar en la sucursal {self.sucursal_id} en el {self.año_inicio} año, lleva {self.asistencia} dias trabajando")
+        return f"El empleado es {self.nombre},cuyo DNI es: {self.dni}, emepezo a trabajar en la sucursal {self.sucursal_id} en el {self.año_inicio} año, lleva {self.asistencia} dias trabajando"
 # ===========================================================
 # VENTANA SUCURSALES
 # ===========================================================
@@ -62,9 +62,15 @@ def abrir_ventana_sucursales():
     mensaje = Label(ventana_sucursales, text="", fg="#00FF00", bg="#0a0a0a", justify="left")
     mensaje.grid(row=0, column=0, columnspan=2, pady=10)
 
-    Label(ventana_sucursales, text="Escriba el ID de la sucursal", fg="#FCAF17", bg="#0a0a0a").grid(row=1, column=0, pady=5)
-    id_sucursal = Entry(ventana_sucursales)
-    id_sucursal.grid(row=1, column=1, pady=5)
+    cursor.execute("SELECT nombre FROM sucursales")
+    nombres = [fila[0] for fila in cursor.fetchall()]
+    if not nombres: nombres = ["No hay sucursales"]
+
+    seleccion = tk.StringVar(ventana_sucursales)
+    seleccion.set(nombres[0])
+
+    Label(ventana_sucursales, text="Seleccione sucursal:", fg="#FCAF17", bg="#0a0a0a").grid(row=1, column=0, pady=5)
+    tk.OptionMenu(ventana_sucursales, seleccion, *nombres).grid(row=1, column=1, pady=5)
 
     Label(ventana_sucursales, text="Escriba el nombre de la sucursal", fg="#FCAF17", bg="#0a0a0a").grid(row=2, column=0, pady=5)
     nombre_sucursal = Entry(ventana_sucursales)
@@ -87,7 +93,7 @@ def abrir_ventana_sucursales():
         nombre_sucursal.delete(0, tk.END)
         direccion_sucursal.delete(0, tk.END)
     def mostrar_sucursal_y_empleados():
-        id_buscar = id_sucursal.get()
+        id_buscar = seleccion.get()
         if id_buscar == "":
             mensaje.config(text="Escriba un ID para buscar", fg="red")
             return
@@ -100,10 +106,10 @@ def abrir_ventana_sucursales():
             mensaje.config(text=texto_final, fg="#00FF00")
         else:
             mensaje.config(text="No existe sucursal con ese ID", fg="red")
+            
     def eliminar_todas_las_sucursales():
         cursor.execute("DROP TABLE IF EXISTS sucursales")
         conexion.commit()
-        # CORREGIDO: mensaje.config no lleva la ventana adentro
         mensaje.config(text="Tabla de sucursales eliminada.", fg="red")
     def crear_nueva_base_de_datos_sucursales():
         cursor.execute(""" CREATE TABLE IF NOT EXISTS sucursales(id INTEGER PRIMARY KEY AUTOINCREMENT,nombre TEXT NOT NULL,direccion TEXT NOT NULL)""")
@@ -125,10 +131,12 @@ def abrir_ventana_empleados():
     ventana_empleados.title('Gestor de empleados')
     ventana_empleados.geometry('500x500')
     ventana_empleados.config(bg="#0a0a0a")
+    mensaje = Label(ventana_empleados, text="", fg="#00FF00", bg="#0a0a0a", justify="left")
+    mensaje.grid(row=6, column=0, columnspan=7, pady=10)
     #ACA ESCRIBO LAS ENTRADAS ASI ME FUNCIONA LAS FUNCIONES Y OBTIENEN LOS DATOS
     Label(ventana_empleados,text="Escriba el ID del empleado", fg="#FCAF17", bg="#0a0a0a").grid(row = 0,column=0,pady=5)
     empleado_id = tk.Entry(ventana_empleados)
-    empleado_id.grid(column=0,pady=5)
+    empleado_id.grid(row = 1,column=0,pady=5)
     Label(ventana_empleados, text="Escriba el nombre del empleado", fg="#FCAF17", bg="#0a0a0a").grid(row= 0,column=1,pady=5)
     empleado_nombre = tk.Entry(ventana_empleados)
     empleado_nombre.grid(row=1,column=1,pady=5)   
@@ -146,10 +154,10 @@ def abrir_ventana_empleados():
     empleado_sucursal_id.grid(row=1, column=6, pady=5)
     def agregar_nuevo_empleado():
         nombre = empleado_nombre.get()
-        dni = int(empleado_DNI.get())
-        años = int(empleado_dias.get())
+        dni = empleado_DNI.get()
+        años = empleado_dias.get()
         asistencia = empleado_asistencia.get()
-        sucursal_id = int(empleado_sucursal_id.get()) 
+        sucursal_id = empleado_sucursal_id.get()
         nuevo_empleado = Empleado(nombre, años, asistencia, dni, sucursal_id)
         cursor.execute("INSERT INTO empleados(nombre, año_inicio, asistencia, dni, sucursal_id) VALUES (?,?,?,?,?)",(nuevo_empleado.nombre, nuevo_empleado.año_inicio, nuevo_empleado.asistencia, nuevo_empleado.dni, nuevo_empleado.sucursal_id))
         conexion.commit()
